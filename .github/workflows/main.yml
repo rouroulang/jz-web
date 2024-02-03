@@ -19,7 +19,7 @@ jobs:
           CI: true
       # Deploy to aliyun
       - name: Deploy to aliyun server
-        uses: easingthemes/ssh-deploy@v2.1.5
+        uses: easingthemes/ssh-deploy@v2.1.1
         env:
           SSH_PRIVATE_KEY: ${{ secrets.ALIYUN_SERVER_ACCESS_TOKEN }}
           ARGS: "-avzr --delete"
