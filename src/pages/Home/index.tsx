@@ -16,6 +16,10 @@ import {
 import { useModel, request } from 'umi';
 import { Button, Divider, Drawer, message } from 'antd';
 import React, { useRef, useState } from 'react';
+import PrintJs from 'print-js'
+import { jsPDF } from "jspdf";
+import html2canvas from 'html2canvas'
+import './index.less'
 import CreateForm from '../../components/CreateForm';
 import UpdateForm, { FormValueType } from '../../components/UpdateForm';
 
@@ -158,6 +162,54 @@ const HomePage: React.FC = () => {
     }
   };
 
+  const getpdf = () => {
+    const html = document.getElementById("print");
+    html2canvas(html, { backgroundColor: '#fff', useCORS: true }).then((canvas) => { // 获取图片
+      const dataURL = canvas.toDataURL('image/png')
+      // console.log(canvas) // 生成的图片
+      // console.log(dataURL) // 生成的图片
+
+      // PrintJs({
+      //   printable: '',
+      //   type: 'pdf',
+      //   showModal: true,
+      //   base64: true,
+      // })
+      var contentWidth = canvas.width
+      var contentHeight = canvas.height
+      // 一页pdf显示html页面生成的canvas高度;
+      var pageHeight = (contentWidth / 592.28) * 841.89
+      // 未生成pdf的html页面高度
+      var leftHeight = contentHeight
+      // 页面偏移
+      var position = 0
+      // a4纸的尺寸[595.28,841.89]，html页面生成的canvas在pdf中图片的宽高
+      var imgWidth = 595.28
+      var imgHeight = (595.28 / contentWidth) * contentHeight
+      var pageData = canvas.toDataURL('image/jpeg', 1.0)
+      var pdf = new jsPDF('', 'pt', 'a4')
+      // 有两个高度需要区分，一个是html页面的实际高度，和生成pdf的页面高度(841.89)
+      // 当内容未超过pdf一页显示的范围，无需分页
+      if (leftHeight < pageHeight) {
+        // 在pdf.addImage(pageData, 'JPEG', 左，上，宽度，高度)设置在pdf中显示；
+        pdf.addImage(pageData, 'JPEG', 0, 0, imgWidth, imgHeight)
+        // pdf.addImage(pageData, 'JPEG', 20, 40, imgWidth, imgHeight);
+      } else {
+        // 分页
+        while (leftHeight > 0) {
+          pdf.addImage(pageData, 'JPEG', 0, position, imgWidth, imgHeight)
+          leftHeight -= pageHeight
+          position -= 841.89
+          // 避免添加空白页
+          if (leftHeight > 0) {
+            pdf.addPage()
+          }
+        }
+      }
+      pdf.save('订单列表')
+    })
+  }
+
   if (isMobile) {
     return 1
   }
@@ -167,6 +219,7 @@ const HomePage: React.FC = () => {
       header={{
         title: '货物列表',
       }}
+
     >
       <ProTable<API.UserInfo>
         headerTitle="查询表格"
@@ -188,6 +241,34 @@ const HomePage: React.FC = () => {
           >
             新建
           </Button>,
+          // <Button
+          //   key="1"
+          //   type="primary"
+          //   onClick={() => {
+          //     getpdf()
+          //     // const pdf = new jsPDF('p', 'pt', 'letter');
+          //     // const html = document.getElementById("print").innerHTML;
+          //     // pdf.html(html, {
+          //     //   callback: () => {
+          //     //     pdf.save("export.pdf");
+          //     //   }
+          //     // });
+          //   }}
+          // >
+          //   PDF
+          // </Button>,
+          <Button
+            type="primary"
+            onClick={() => {
+              PrintJs({
+                printable: 'print',
+                type: 'html',
+                scanStyles: false,
+              })
+            }}
+          >
+            打印
+          </Button>
         ]}
         request={async (params, sorter, filter) => {
           console.log(params)
@@ -299,6 +380,40 @@ const HomePage: React.FC = () => {
           />
         </ProForm.Group>
       </ModalForm>
+      <div id="print" style={{ width: '100%' }}>
+        <h1 style={{ textAlign: 'center', margin: '20px 0' }}>销售订单</h1>
+        <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+          <div style={{ width: '33%', marginBottom: 10 }}>制单人：1111</div>
+          <div style={{ width: '33%', marginBottom: 10 }}>录单日期：1111</div>
+          <div style={{ width: '33%', marginBottom: 10 }}>单据编号：1111</div>
+        </div>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }} border={1}>
+          <thead style={{ backgroundColor: '#dddddd' }}>
+            <tr>
+              <th>存货编号</th>
+              <th>存货名称</th>
+              <th>单位</th>
+              <th>数量</th>
+              <th>单价</th>
+              <th>金额</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th>111</th>
+              <th>111</th>
+              <th>111</th>
+              <th>111</th>
+              <th>111</th>
+              <th>111</th>
+            </tr>
+            <tr>
+              <th>合计</th>
+              <th colSpan={5}>1111</th>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </PageContainer>
   );
 };
